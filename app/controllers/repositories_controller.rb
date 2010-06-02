@@ -3,15 +3,9 @@ class RepositoriesController < ApplicationController
  
   before_filter :find_repository, :except => :edit
   before_filter :find_project, :only => :edit
-  before_filter :forward_to_diff, :only => :revision
-  before_filter :improved_diff, :only => :diff
+  before_filter :improved_revision, :only => :revision
 
-  def forward_to_diff
-    redirect_to(:controller => "repositories", :action => "diff", :rev => params[:rev])
-    return false
-  end
-  
-  def improved_diff
+  def improved_revision
     @changeset = @repository.find_changeset_by_name(@rev)
     (show_error_not_found; return) unless @changeset
 
@@ -39,7 +33,7 @@ class RepositoriesController < ApplicationController
         show_error_not_found unless @diff
       end
     end
-    render :template => "repositories/diff.html"
+    render :template => "repositories/revision.html"
     return
   end
 end
