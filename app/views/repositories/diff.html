@@ -1,0 +1,81 @@
+<div class="contextual">
+  &#171;
+  <% unless @changeset.previous.nil? -%>
+    <%= link_to_revision(@changeset.previous.revision, @project, :text => l(:label_previous)) %>
+  <% else -%>
+    <%= l(:label_previous) %>
+  <% end -%>
+|
+  <% unless @changeset.next.nil? -%>
+    <%= link_to_revision(@changeset.next.revision, @project, :text => l(:label_next)) %>
+  <% else -%>
+    <%= l(:label_next) %>
+  <% end -%>
+  &#187;&nbsp;
+
+  <% form_tag({:controller => 'repositories', :action => 'revision', :id => @project, :rev => nil}, :method => :get) do %>
+    <%= text_field_tag 'rev', @rev[0,8], :size => 8 %>
+    <%= submit_tag 'OK', :name => nil %>
+  <% end %>
+</div>
+
+<h2><%= l(:label_revision) %> <%= format_revision(@changeset.revision) %></h2>
+
+<p><% if @changeset.scmid %>ID: <%= @changeset.scmid %><br /><% end %>
+<span class="author"><%= authoring(@changeset.committed_on, @changeset.author) %></span></p>
+
+<%= textilizable @changeset.comments %>
+
+<% if @changeset.issues.visible.any? %>
+<h3><%= l(:label_related_issues) %></h3>
+<ul>
+<% @changeset.issues.visible.each do |issue| %>
+  <li><%= link_to_issue issue %></li>
+<% end %>
+</ul>
+<% end %>
+
+<% if User.current.allowed_to?(:browse_repository, @project) %>
+<h3><%= l(:label_attachment_plural) %></h3>
+<ul id="changes-legend">
+<li class="change change-A"><%= l(:label_added) %></li>
+<li class="change change-M"><%= l(:label_modified) %></li>
+<li class="change change-C"><%= l(:label_copied) %></li>
+<li class="change change-R"><%= l(:label_renamed) %></li>
+<li class="change change-D"><%= l(:label_deleted) %></li>
+</ul>
+
+<p><%= link_to(l(:label_view_diff), :action => 'diff', :id => @project, :path => "", :rev => @changeset.revision) if @changeset.changes.any? %></p>
+
+<div class="changeset-changes">
+<%= render_changeset_changes %>
+</div>
+<% end %>
+
+<% content_for :header_tags do %>
+<%= stylesheet_link_tag "scm" %>
+<% end %>
+
+<% html_title("#{l(:label_revision)} #{@changeset.revision}") -%>
+
+<!-- Choose view type -->
+<% form_tag({}, :method => 'get') do %>
+  <%= hidden_field_tag('rev', params[:rev]) if params[:rev] %>
+  <%= hidden_field_tag('rev_to', params[:rev_to]) if params[:rev_to] %>
+  <p><label><%= l(:label_view_diff) %></label>
+  <%= select_tag 'type', options_for_select([[l(:label_diff_inline), "inline"], [l(:label_diff_side_by_side), "sbs"]], @diff_type), :onchange => "if (this.value != '') {this.form.submit()}" %></p>
+<% end %>
+
+<% cache(@cache_key) do -%>
+<%= render :partial => 'common/diff', :locals => {:diff => @diff, :diff_type => @diff_type} %>
+<% end -%>
+
+<% other_formats_links do |f| %>
+	<%= f.link_to 'Diff', :url => params, :caption => 'Unified diff' %>
+<% end %>
+
+<% html_title(with_leading_slash(@path), 'Diff') -%>
+
+<% content_for :header_tags do %>
+<%= stylesheet_link_tag "scm" %>
+<% end %>

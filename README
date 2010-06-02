@@ -1,1 +1,1 @@
-Forwards to the default revision page to the diff page (ala Trac).
+Replaces the default revision page with a combined revision + diff.
